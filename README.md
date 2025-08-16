@@ -73,6 +73,8 @@ Builds the app for production to the `build` folder.
 ### `npm run eject`
 **Note: this is a one-way operation. Once you `eject`, you can't go back!**
 
+### `Contract address - 0x78e94c45fc12dee96330084c307ac3e06ecb854f25254ea0fcd215732dc1a75e`
+
 ## Design System
 
 The UI uses a custom design system with:
