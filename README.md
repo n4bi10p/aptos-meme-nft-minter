@@ -75,6 +75,10 @@ Builds the app for production to the `build` folder.
 
 ### `Contract address - 0x78e94c45fc12dee96330084c307ac3e06ecb854f25254ea0fcd215732dc1a75e`
 
+## Screenshot
+<img width="1689" height="1040" alt="image" src="https://github.com/user-attachments/assets/28e668ee-d916-4e3d-b1ec-2b703dd8c713" />
+
+
 ## Design System
 
 The UI uses a custom design system with:
