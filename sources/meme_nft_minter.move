@@ -21,7 +21,7 @@ module meme_nft::MemeNFTMinter {
     }
 
     /// Function to create and mint a new Meme NFT
-    public fun mint_meme_nft(
+    public entry fun mint_meme_nft(
         creator: &signer, 
         name: String, 
         mint_price: u64
@@ -47,7 +47,7 @@ module meme_nft::MemeNFTMinter {
     }
 
     /// Function to purchase and transfer a Meme NFT
-    public fun purchase_meme_nft(
+    public entry fun purchase_meme_nft(
         buyer: &signer, 
         nft_owner: address, 
         nft_id: u64

@@ -1,13 +1,10 @@
 import React, { useState } from 'react';
 import { useWallet } from '@aptos-labs/wallet-adapter-react';
-import { Aptos, AptosConfig, Network } from '@aptos-labs/ts-sdk';
 import { PlusIcon, SparklesIcon } from '@heroicons/react/24/outline';
-
-const aptosConfig = new AptosConfig({ network: Network.TESTNET });
-const aptos = new Aptos(aptosConfig);
+import { MINT_FUNCTION, NETWORK } from '../config/constants';
 
 export const MintNFT: React.FC = () => {
-  const { connected, account, signAndSubmitTransaction } = useWallet();
+  const { connected, account, signAndSubmitTransaction, network } = useWallet();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -16,22 +13,31 @@ export const MintNFT: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!connected || !account) return;
+    if (!connected || !account) {
+      alert('Please connect your wallet first!');
+      return;
+    }
+
+    // Network validation
+    if (network?.name !== NETWORK) {
+      alert(`Please switch your wallet to ${NETWORK.toUpperCase()} network. Currently connected to: ${network?.name || 'unknown'}`);
+      return;
+    }
 
     setIsLoading(true);
     try {
-      const transaction = {
-        data: {
-          function: "0x64f6979360f13452cd87d367490075326f8e73d21a8bc746695f8d15e12e2016::MemeNFTMinter::mint_meme_nft",
-          typeArguments: [],
-          functionArguments: [
-            formData.name,
-            parseInt(formData.price) * 100000000, // Convert to octas (1 APT = 100000000 octas)
-          ],
-        },
+      const payload = {
+        function: MINT_FUNCTION,
+        functionArguments: [
+          formData.name,
+          (parseInt(formData.price) * 100000000).toString(), // Convert to octas
+        ],
       };
 
-      const response = await signAndSubmitTransaction(transaction);
+      console.log('Submitting transaction with payload:', payload);
+      console.log('Current network:', network);
+      
+      const response = await signAndSubmitTransaction({ data: payload } as any);
       console.log('Transaction submitted:', response);
       
       // Reset form
@@ -39,7 +45,7 @@ export const MintNFT: React.FC = () => {
       alert('Meme NFT minted successfully!');
     } catch (error) {
       console.error('Error minting NFT:', error);
-      alert('Failed to mint NFT. Please try again.');
+      alert(`Failed to mint NFT: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsLoading(false);
     }
@@ -52,19 +58,19 @@ export const MintNFT: React.FC = () => {
           <SparklesIcon className="w-6 h-6 text-white" />
         </div>
         <div>
-          <h2 className="text-xl font-semibold text-gray-900">Mint Meme NFT</h2>
-          <p className="text-gray-500">Create your unique meme NFT</p>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Mint Meme NFT</h2>
+          <p className="text-gray-500 dark:text-gray-400">Create your unique meme NFT</p>
         </div>
       </div>
 
       {!connected ? (
         <div className="text-center py-8">
-          <p className="text-gray-500 mb-4">Connect your wallet to start minting NFTs</p>
+          <p className="text-gray-500 dark:text-gray-400 mb-4">Connect your wallet to start minting NFTs</p>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               NFT Name
             </label>
             <input
@@ -78,7 +84,7 @@ export const MintNFT: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Mint Price (APT)
             </label>
             <input

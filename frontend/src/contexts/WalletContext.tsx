@@ -1,9 +1,5 @@
 import React from 'react';
-import { AptosWalletAdapterProvider, NetworkName } from '@aptos-labs/wallet-adapter-react';
-
-const wallets = [
-  // Wallets will be automatically detected and included
-];
+import { AptosWalletAdapterProvider } from '@aptos-labs/wallet-adapter-react';
 
 interface WalletContextProviderProps {
   children: React.ReactNode;
@@ -12,11 +8,13 @@ interface WalletContextProviderProps {
 export const WalletContextProvider: React.FC<WalletContextProviderProps> = ({ children }) => {
   return (
     <AptosWalletAdapterProvider
-      plugins={wallets}
       autoConnect={true}
       dappConfig={{
-        network: NetworkName.Testnet,
+        network: "devnet" as any,
         aptosConnectDappId: "meme-nft-minter"
+      }}
+      onError={(error) => {
+        console.error('Wallet connection error:', error);
       }}
     >
       {children}
