@@ -4,7 +4,7 @@ version = "1.0.0"
 authors = []
 
 [addresses]
-meme_nft = "0x64f6979360f13452cd87d367490075326f8e73d21a8bc746695f8d15e12e2016"
+meme_nft = "0x26198839dbbf26dcd13e1ea47702e9dc7a08604486033d6ac513cee981309ea9"
 
 [dev-addresses]
 

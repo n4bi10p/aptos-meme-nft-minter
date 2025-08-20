@@ -1,4 +1,4 @@
-module meme_nft::MemeNFTMinter {
+module meme_nft::MemeNFTMinterV2 {
 
     use aptos_framework::signer;
     use aptos_framework::coin;
@@ -6,8 +6,8 @@ module meme_nft::MemeNFTMinter {
     use std::string::String;
     use std::vector;
 
-    /// Struct representing a Meme NFT
-    struct MemeNFT has store, drop {
+    /// Struct representing a Meme NFT with image support
+    struct MemeNFTV2 has store, drop, copy {
         id: u64,           // Unique identifier for the NFT
         name: String,      // Name of the meme NFT
         description: String, // Caption/description of the meme
@@ -17,30 +17,30 @@ module meme_nft::MemeNFTMinter {
     }
 
     /// Collection to hold multiple NFTs for an account
-    struct NFTCollection has key {
-        nfts: vector<MemeNFT>,
+    struct NFTCollectionV2 has key {
+        nfts: vector<MemeNFTV2>,
         counter: u64,
     }
 
-    /// Function to create and mint a new Meme NFT
-    public entry fun mint_meme_nft(
+    /// Function to create and mint a new Meme NFT with image
+    public entry fun mint_meme_nft_v2(
         creator: &signer, 
         name: String,
         description: String,
         image_uri: String,
         mint_price: u64
-    ) acquires NFTCollection {
+    ) acquires NFTCollectionV2 {
         let creator_addr = signer::address_of(creator);
         
         // Initialize collection if it doesn't exist
-        if (!exists<NFTCollection>(creator_addr)) {
-            move_to(creator, NFTCollection { nfts: vector::empty(), counter: 0 });
+        if (!exists<NFTCollectionV2>(creator_addr)) {
+            move_to(creator, NFTCollectionV2 { nfts: vector::empty(), counter: 0 });
         };
         
-        let collection = borrow_global_mut<NFTCollection>(creator_addr);
+        let collection = borrow_global_mut<NFTCollectionV2>(creator_addr);
         collection.counter = collection.counter + 1;
         
-        let nft = MemeNFT {
+        let nft = MemeNFTV2 {
             id: collection.counter,
             name,
             description,
@@ -53,12 +53,12 @@ module meme_nft::MemeNFTMinter {
     }
 
     /// Function to purchase and transfer a Meme NFT
-    public entry fun purchase_meme_nft(
+    public entry fun purchase_meme_nft_v2(
         buyer: &signer, 
         nft_owner: address, 
         nft_id: u64
-    ) acquires NFTCollection {
-        let owner_collection = borrow_global_mut<NFTCollection>(nft_owner);
+    ) acquires NFTCollectionV2 {
+        let owner_collection = borrow_global_mut<NFTCollectionV2>(nft_owner);
         let buyer_addr = signer::address_of(buyer);
         
         // Find and remove the NFT from owner's collection
@@ -82,42 +82,37 @@ module meme_nft::MemeNFTMinter {
         coin::deposit<AptosCoin>(nft.creator, payment);
         
         // Initialize buyer's collection if needed and add NFT
-        if (!exists<NFTCollection>(buyer_addr)) {
-            move_to(buyer, NFTCollection { nfts: vector::empty(), counter: 0 });
+        if (!exists<NFTCollectionV2>(buyer_addr)) {
+            move_to(buyer, NFTCollectionV2 { nfts: vector::empty(), counter: 0 });
         };
-        let buyer_collection = borrow_global_mut<NFTCollection>(buyer_addr);
+        let buyer_collection = borrow_global_mut<NFTCollectionV2>(buyer_addr);
         vector::push_back(&mut buyer_collection.nfts, nft);
     }
 
-    /// Function to delete an NFT from the owner's collection
-    public entry fun delete_meme_nft(
-        owner: &signer,
-        nft_id: u64
-    ) acquires NFTCollection {
-        let owner_addr = signer::address_of(owner);
-        
-        // Check if the owner has a collection
-        assert!(exists<NFTCollection>(owner_addr), 1);
-        
-        let collection = borrow_global_mut<NFTCollection>(owner_addr);
-        
-        // Find and remove the NFT from owner's collection
-        let nft_index = 0;
-        let found = false;
+    #[view]
+    public fun get_nft_details(owner: address, nft_id: u64): (String, String, String, address, u64) acquires NFTCollectionV2 {
+        let collection = borrow_global<NFTCollectionV2>(owner);
         let len = vector::length(&collection.nfts);
-        while (nft_index < len) {
-            let nft_ref = vector::borrow(&collection.nfts, nft_index);
-            if (nft_ref.id == nft_id) {
-                found = true;
-                break
+        let i = 0;
+        
+        while (i < len) {
+            let nft = vector::borrow(&collection.nfts, i);
+            if (nft.id == nft_id) {
+                return (nft.name, nft.description, nft.image_uri, nft.creator, nft.mint_price)
             };
-            nft_index = nft_index + 1;
+            i = i + 1;
         };
         
-        // Assert that the NFT was found
-        assert!(found, 2);
+        abort 1 // NFT not found
+    }
+
+    #[view] 
+    public fun get_nft_count(owner: address): u64 acquires NFTCollectionV2 {
+        if (!exists<NFTCollectionV2>(owner)) {
+            return 0
+        };
         
-        // Remove the NFT from the collection
-        vector::remove(&mut collection.nfts, nft_index);
+        let collection = borrow_global<NFTCollectionV2>(owner);
+        vector::length(&collection.nfts)
     }
 }
