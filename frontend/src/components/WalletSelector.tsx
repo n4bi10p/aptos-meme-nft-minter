@@ -6,12 +6,26 @@ export const WalletSelector: React.FC = () => {
   const { wallets, connect, disconnect, connected, wallet } = useWallet();
   const [isOpen, setIsOpen] = useState(false);
 
+  // Filter to only show Petra and Pontem wallets
+  const allowedWallets = wallets?.filter(w => 
+    w.name.toLowerCase().includes('petra') || 
+    w.name.toLowerCase().includes('pontem')
+  ) || [];
+
   const handleConnect = async (walletName: string) => {
     try {
+      console.log('Attempting to connect to:', walletName);
       await connect(walletName as any);
       setIsOpen(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to connect wallet:', error);
+      
+      // Provide user-friendly error messages
+      if (error.message?.includes('not installed') || error.message?.includes('not found')) {
+        alert(`${walletName} wallet is not installed. Please install the ${walletName} browser extension and try again.`);
+      } else {
+        alert(`Failed to connect to ${walletName}: ${error.message || 'Unknown error'}`);
+      }
     }
   };
 
@@ -42,14 +56,14 @@ export const WalletSelector: React.FC = () => {
           {connected ? (
             <button
               onClick={handleDisconnect}
-              className="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-xl transition-colors text-red-600 dark:text-red-400 font-medium"
+              className="btn-secondary w-full text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
             >
               Disconnect Wallet
             </button>
           ) : (
             <div className="space-y-2">
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Choose your wallet:</p>
-              {wallets && wallets.map((availableWallet) => (
+              {allowedWallets.map((availableWallet) => (
                 <button
                   key={availableWallet.name}
                   onClick={() => handleConnect(availableWallet.name)}
@@ -60,9 +74,41 @@ export const WalletSelector: React.FC = () => {
                     alt={availableWallet.name}
                     className="w-8 h-8 rounded-lg"
                   />
-                  <span className="font-medium text-gray-900 dark:text-gray-100">{availableWallet.name}</span>
+                  <div className="flex-1 text-left">
+                    <span className="font-medium text-gray-900 dark:text-gray-100">{availableWallet.name}</span>
+                    {!availableWallet.readyState && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Click to install</p>
+                    )}
+                  </div>
                 </button>
               ))}
+              {allowedWallets.length === 0 && (
+                <div className="px-4 py-3 space-y-3">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    No supported wallets found. Please install one of these wallets:
+                  </p>
+                  <div className="space-y-2">
+                    <a
+                      href="https://petra.app/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block w-full p-3 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      <div className="font-medium text-gray-900 dark:text-gray-100">Install Petra Wallet</div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400">Most popular Aptos wallet</div>
+                    </a>
+                    <a
+                      href="https://pontem.network/pontem-wallet"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block w-full p-3 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      <div className="font-medium text-gray-900 dark:text-gray-100">Install Pontem Wallet</div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400">Secure Aptos wallet</div>
+                    </a>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
